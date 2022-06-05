@@ -1,0 +1,58 @@
+{% extends 'layout/base.html' %}
+{% block title %} Sign in {% endblock %}
+
+{% block body %}
+    <h1 class="text-center">Sign in</h1>
+    <hr>
+    <div id="feedback" class="m-3"></div>
+    <div class="access_input text-center">
+        {% csrf_token %}
+        <label for="email">Email</label><br>
+        <input type="email" id="email" name="email" value="" placeholder="abc@gmail.com"><br>
+
+        <label for="password">Password</label><br>
+        <input type="password" id="password" name="password" value="" placeholder="password"><br>
+
+        <input class="m-3 btn neuEffect btn-lg" type="submit" value="Sign in" id="signin_submit">
+    </div>
+
+    <script>
+        $('#signin_submit').click(function (){
+            let data_str = {}
+            let url_path = "/registration/api/sign_in/"
+            data_str['email'] = $('#email').val()
+            data_str['password'] = $('#password').val()
+            // console.log(data_str)
+            $.ajax({
+                type: "POST",
+                url: url_path,
+                contentType: 'application/json',
+                data: JSON.stringify(data_str),
+                headers: {"X-CSRFToken": '{{ csrf_token }}'},
+                success: function (value){
+
+                    // console.log("succcccess checking")
+                    // console.log(value)
+                    if (value.status == 200){
+                        document.cookie='access='+value.access+';path=/'
+                        document.cookie='slug='+value.slug+';path=/'
+                        document.cookie='user_name='+value.user_name+';path=/'
+
+                        window.location="/"
+                    }
+                    else{
+                        $('#feedback').html(`
+							<h1>${value.message}</h1>
+						`)
+                    }
+                },
+                error: function (data){
+                    $('#feedback').html(`
+                        <h1>${data.message}</h1>
+                    `)
+                }
+            });
+        })
+    </script>
+{% endblock %}
+

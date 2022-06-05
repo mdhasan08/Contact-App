@@ -1,0 +1,193 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Contacts{% endblock %}
+
+{% block body %}
+
+<h1 class="m-5" id="log_info">Sign up or Sign in</h1>
+
+<div class="container" id="main_container">
+    <div class="row text-secondary" style="align-items: center;">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <span class="h4"><strong>Name</strong></span>
+                </div>
+                <div class="col">
+                    <span class="h4"><strong>email</strong></span>
+                </div>
+                <div class="col">
+                    <span class="h4"><strong>Phone</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="col" style="max-width: 20%;">
+            <div class="row">
+            <div class="col">
+                <span class="h4"><strong></strong></span>
+            </div>
+            <div class="col">
+                <span class="h4"><strong></strong></span>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<div class="container text-secondary" id="card">
+
+</div>
+
+
+
+    <script>
+    $('#contract_list_head').hide()
+    $('#main_container').hide()
+    let cookie_data = document.cookie
+    const part = cookie_data.split(";")
+    if(part[1]){
+        $('#contract_list_head').show()
+        $('#main_container').show()
+        $('#log_info').hide()
+    }
+    let x = document.cookie
+        .split(';')
+        .map(cookie => cookie.split('='))
+        .reduce((accumulator, [key, value]) => ({ ...accumulator, [key.trim()]: decodeURIComponent(value) }), {});
+
+        $.ajax({
+            type: "GET",
+            url: "/contact_list_api/",
+            headers: {Authorization: 'Bearer ' + x.access},
+            data: "",
+            success: function(data){
+                 // console.log("Success Checking")
+                 // console.log(data)
+
+                for(var i = 0; i < data.length; i++){
+                    $('#card').append(`
+                        <div class="row hoverEffect rounded-pill full_contact" style="align-items: center;" id="${data[i].slug}" onmouseover="hover_on_display(this)" onmouseout="remove_on_mouseout(this)">
+                            <div class="col">
+                                <a class="row" href="/details/${data[i].slug}/">
+                                    <div class="col">
+                                        <span class="">${data[i].name}</span>
+                                    </div>
+                                    <div class="col">
+                                        <span class="">${data[i].email}</span>
+                                    </div>
+                                    <div class="col">
+                                        <span class="">${data[i].phone}</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col display_on_hover">
+                                <div class="row">
+                                    <div class="col">
+                                        <button class="m-2 col btn neuEffect btn-sm fa fa-trash" id="${data[i].slug}" style="font-size: 18px;" onclick="delete_contact(this)"></button>
+                                    </div>
+                                    <div class="col">
+                                        <a class="m-2 col btn neuEffect btn-sm fa fa-share" href="shear/${data[i].slug}/" style="font-size: 18px;"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `)
+                }
+            },
+            error: function(data){
+                console.log("Error Checking")
+                console.log(data)
+            }
+        });
+
+        $('#search').click(function(){
+            input_data = {}
+            input_data['search_keywords'] = $('#search_keyword').val()
+
+            $.ajax({
+                type: "PUT",
+                url: "/search_contacts_api/",
+                headers: {Authorization: 'Bearer ' + x.access},
+                data: JSON.stringify(input_data),
+                success: function(data){
+                    // console.log("Success Checking search")
+                    // console.log(data)
+
+                    if(data.lenght != 0){
+                        $('#card').html('')
+                        for(var i = 0; i < data.length; i++){
+                            $('#card').append(`
+                                <div class="row hoverEffect rounded-pill full_contact" style="align-items: center;" onmouseover="hover_on_display(this)" onmouseout="remove_on_mouseout(this)">
+                                    <div class="col">
+                                        <a class="row" href="/details/${data[i].slug}/">
+                                            <div class="col">
+                                                <span class="h4">${data[i].name}</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="h4">${data[i].email}</span>
+                                            </div>
+                                            <div class="col">
+                                                <span class="h4">${data[i].phone}</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col display_on_hover">
+                                        <div class="row">
+                                            <div class="col">
+                                                <button class="m-2 col btn neuEffect btn-sm fa fa-trash" id="${data[i].slug}" style="font-size: 18px;" onclick="delete_contact(this)"></button>
+                                            </div>
+                                            <div class="col">
+                                                <a class="m-2 col btn neuEffect btn-sm fa fa-share" href="shear/${data[i].slug}/" style="font-size: 18px;"></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `)
+                        }
+                    }
+
+
+                },
+                error: function(data){
+                    console.log("Error Checking")
+                    console.log(data)
+                }
+            });
+        })
+
+        function delete_contact(slug){
+
+            $.ajax({
+                type: "PUT",
+                url: "/deletecontact_api/"+slug.id+"/",
+                headers: {Authorization: 'Bearer ' + x.access},
+                //data: JSON.stringify(delete_data),
+                success: function(data){
+                    // alert("success")
+                    // alert(data.message)
+                    if(data.status == 200){
+                        // window.location = "/"
+                        $(slug).closest(".full_contact").hide('slow', function(){ $$(slug).closest(".full_contact").remove(); });
+                    }
+                },
+                error: function(data){
+                    console.log("error_delete")
+                    console.log(data)
+                }
+            });
+        }
+
+        function hover_on_display(data){
+            item = data.querySelector('.display_on_hover')
+            $(item).attr("style", "visibility: visible;")
+        }
+
+        function remove_on_mouseout(data){
+            item = data.querySelector('.display_on_hover')
+            $(item).attr("style", "")
+        }
+    </script>
+
+{% endblock %}

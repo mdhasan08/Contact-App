@@ -1,0 +1,105 @@
+{% extends 'layout/base.html' %}
+{% block title %} Sign in {% endblock %}
+
+{% block body %}
+	<h1 class="text-center">Sign Up</h1>
+	<hr>
+	<div id="content">
+		<div id="from_body">
+			<form enctype="multipart/form-data" id="form_sign_up" method="POST">
+				{% csrf_token %}
+				<label for="full_name">Full name:</label><br>
+				<input type="text" id="full_name" name="full_name" placeholder="Full name"><br><br>
+				<label for="email">Email:</label><br>
+				<input type="email" id="email" name="email" placeholder="abc@gmail.com"><br><br>
+				<label for="password">Password:</label><br>
+				<input type="password" id="password" name="password" placeholder=""><br><br>
+				<input class="m-3 btn neuEffect btn-lg" type="submit" value="Sign Up">
+			</form>
+		</div>
+	</div>
+
+	<script>
+		$('#form_sign_up').submit(function(event){
+			event.preventDefault()
+			var data_str = new FormData(document.getElementById('form_sign_up'));
+			$.ajax({
+				type:"POST",
+				headers: {"X-CSRFToken" : '{{csrf_token}}'},
+				enctype:'multipart/form-data',
+				processData:false,
+				async:false,
+				cache:false,
+				contentType:false,
+				url : "/registration/api/sign_up/",
+				data: data_str,
+				success: function(data){
+					console.log("success checking")
+					console.log(data)
+					if(data.status == 200){
+						$('#content').html(`
+							<br>
+							<h3 class="mt-3">Please Check Your Mail for verification</h3>
+							<h4 class="m-5"> NOTE : Please Check SPAM folder of your mail In case if It's got recognise as spam</h3>
+						`)
+
+						localStorage.removeItem('localEmail')
+					}
+					else if(data.status == 208){
+						$('#content').html(`
+							<br>
+							<h3 class="mt-3">No Need to Sign Up!<br>An account Found with this Email</h3>
+							<h4 class="m-5"> You can directly Sign In</h3>
+							<a class="btn btn-lg neuEffect" href="/sign_in/">Sign In Page</a>
+						`)
+						localStorage.removeItem('localEmail')
+					}
+					else if(data.status == 401){
+						localStorage.setItem('localEmail', data.email)
+						$('#content').html(`
+							<br>
+							<h3 class="mt-3">Heads Up!<br>An Unactivated account Found with this Email</h3>
+							<h4 class="m-5"> You can verify now</h3>
+							<button class="btn btn-lg neuEffect m-3" onclick="send_verification_link()" id="verification_link">Send verification link</button>
+						`)
+					}
+				},
+				error: function(errormsg){
+					console.log(errormsg)
+				}
+			});
+		})
+
+		function send_verification_link(){
+            input_data = {}
+            input_data['email'] = localStorage.getItem('localEmail')
+
+            $.ajax({
+                type: "PUT",
+                url: "/registration/send_verification_link_api/",
+                data: JSON.stringify(input_data),
+                success: function(data){
+                    console.log("checking Api Success")
+                    console.log(data)
+                    if(data.status == 200){
+                        console.log("Success")
+                        console.log(data)
+						$('#content').html(`
+							<br>
+							<h3 class="mt-3">Please Check Your Mail for verification</h3>
+							<h4 class="m-5"> NOTE : Please Check SPAM folder of your mail In case if It's got recognise as spam</h3>
+						`)
+
+						localStorage.removeItem('localEmail')
+                    }
+                },
+                error: function(data){
+                    console.log("checking Error")
+                    console.log(data)
+                }
+            });
+        }
+
+	</script>
+{% endblock %}
+

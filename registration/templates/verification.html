@@ -1,0 +1,50 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}sign up{% endblock %}
+
+{% block body %}
+
+<h1 class="m-5">Account Verification</h1>
+
+<div class="justify-content-center mx-auto" style="max-width: 70%" id="card">
+    <button id="activate-account" class="btn btn-lg neuEffect">Activate Account</button>
+</div>
+
+    <script>
+        $('#home').hide()
+        $('#student_signUp').addClass('active')
+
+        $('#activate-account').click(function(){
+            var urlPath = window.location.pathname.split('/')
+
+            input_data = {}
+            input_data['otpEmail'] = urlPath[3]
+            input_data['otp'] = urlPath[4]
+
+            $.ajax({
+                type: "PUT",
+                url: "/registration/otp_check_api/",
+                data: JSON.stringify(input_data),
+                success: function(data){
+                    console.log("Checking Api success")
+                    console.log(data)
+                    if(data.status == 200){
+                        console.log("success")
+                        console.log(data)
+                        window.location.href = '/registration/signin/'
+                    }
+                    else{
+                        console.log("Final Error")
+                        console.log(data)
+                        $('#otp-feedback').html(data.message)
+                    }
+                },
+                error: function(data){
+                    console.log("checking API error")
+                    console.log(data)
+                }
+            })
+        })
+    </script>
+
+{% endblock %}
